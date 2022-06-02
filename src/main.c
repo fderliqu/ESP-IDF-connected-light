@@ -1,10 +1,11 @@
 //----------------------------INCLUDES
 
 #include"esp_wifi.h"
-#include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/event_groups.h"
+#include"esp_log.h"
+#include"esp_event.h"
+#include"freertos/FreeRTOS.h"
+#include"freertos/task.h"
+#include"freertos/event_groups.h"
 
 
 //----------------------------DEFINES/GLOBALS
@@ -41,7 +42,7 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
             esp_wifi_connect();
         }
         else{
-            ESP_LOGW(TAG_wifi_sta,"WiFi info is not set or not ready");
+            ESP_LOGI(TAG_wifi_sta,"WiFi info is not set or not ready");
         }
     }
     //If ESP32 WiFi station disconnected to AP
@@ -71,10 +72,40 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
 
 //----------------------------WIFI_FUNCTION
 
+//INIT_WIFI
+
+static esp_err_t init_wifi(){
+    //init TCP/IP pile
+    ESP_ERROR_CHECK(esp_netif_init());
+
+    //create loop event
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    esp_netif_t *netif_wifi_sta = esp_netif_create_default_wifi_sta();
+    assert(netif_wifi_sta);
+
+    //init default Wifi configuration
+    wifi_init_config_t config = WIFI_INIT_CONFIG_DEFAULT();
+
+    //init Wifi with default config and start it
+    ESP_ERROR_CHECK(esp_wifi_init(&config));
+
+    //install event handlers
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT,ESP_EVENT_ANY_ID,&event_handler,NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT,IP_EVENT_STA_GOT_IP,&event_handler,NULL));
+
+    //start wifi with default config
+    esp_err_t status = esp_wifi_start();
+    ESP_ERROR_CHECK(status);
+
+    return status;
+}
+
 //----------------------------SERVER_FUNCTION
 
 //----------------------------SPIFFS_FUNCTION
 
 //----------------------------MAIN
 
-void app_main() {}
+void app_main() {
+    init_wifi();
+}
