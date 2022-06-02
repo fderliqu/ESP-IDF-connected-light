@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <title>ESP32 Light Control</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8"/>
+    <link rel="stylesheet" href="w3.css">
+    <script type="text/javascript" src="script.js"></script>
+    <body>
+        <div class="w3-container w3-black w3-center w3-margin-bottom">
+            <h1>ESP32 Light Control</h1>
+            <p>use the buttons below to control the light</p>
+        </div>
+
+        <div class="w3-card-4 w3-light-grey w3-margin w3-padding">
+            <div class="w3-card-4 w3-padding w3-margin w3-center w3-white">
+              <h3>On/Off Buttons</h3>
+              <h5>Status : status</h5>
+              <div class="w3-section">
+                <button onclick="OnButton()" class="w3-button w3-green">On</button>
+                <button onclick="OffButton()" class="w3-button w3-red">Off</button>
+              </div>
+            </div>
+
+            <div class="w3-card-4 w3-padding w3-margin w3-center w3-white">
+                <h3>Color : </h3>
+                <div class="w3-section" >
+                  <button onclick="BlueButton()" class="w3-button w3-indigo">Blue</button>
+                  <button onclick="RedButton()" class="w3-button w3-red">Red</button>
+                  <button onclick="GreenButton()" class="w3-button w3-green">Green</button>
+                  <button onclick="CyanButton()" class="w3-button w3-cyan">Cyan</button>
+                  <button onclick="RedButton()" class="w3-button w3-pink">Pink</button>
+                  <button onclick="YellowButton()" class="w3-button w3-yellow">Yellow</button>
+                </div>
+              </div>
+        </div>
+
+        <div class="w3-padding w3-center">
+            <i>Florian Derlique 2022</i>
+        </div>
+    </body>
+</html>
