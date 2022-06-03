@@ -1,3 +1,11 @@
+/*
+    ESP-IDF-connected-light by Florian Derlique
+    June 2022
+    v0.0.3 : 
+        --> ESP scan wifi AP and connect to ssid declared in DEFINES/GLOBAL
+        --> [NEW] If ESP is disconnected, ESP try to reconnect, if reach max attempts, ESP restart scanning AP
+*/
+
 //----------------------------INCLUDES
 
 #include <string.h>
@@ -22,7 +30,7 @@ esp_event_handler_instance_t instance_any_id;
 esp_event_handler_instance_t instance_got_ip;
 
 /* FreeRTOS event group to signal when we are connected*/
-static EventGroupHandle_t wifi_sta_event_group;
+//static EventGroupHandle_t wifi_sta_event_group;
 
 /* The event group allows multiple bits for each event, but we only care about two events:
  * - we are connected to the AP with an IP
@@ -32,6 +40,7 @@ static EventGroupHandle_t wifi_sta_event_group;
 
 //ConnectionStart
 static bool ConnectionStart = false;
+bool status_scan = false, status_connected = false;
 
 //TAGS for ESP LOGGING
 static const char *TAG_wifi_sta = "[ESP-Wifi]";
@@ -151,16 +160,22 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
             }
             //Else set event group to WIFI_FAIL event
             else{
-                xEventGroupSetBits(wifi_sta_event_group,WIFI_FAIL_BIT);
+                status_scan = false;
+                ConnectionStart = false;
+                ESP_LOGI(TAG_wifi_sta,"Can't connect to the AP %s",ESP_WIFI_SSID);
+                //xEventGroupSetBits(wifi_sta_event_group,WIFI_FAIL_BIT);
             }
             ESP_LOGI(TAG_wifi_sta,"connect to the AP failed");
+            status_connected = false;
+            
         }
     }
     else if(event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP){
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         ESP_LOGI(TAG_wifi_sta, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
         wifi_sta_retry_num = 0;
-        xEventGroupSetBits(wifi_sta_event_group, WIFI_CONNECTED_BIT);
+        status_connected = true;
+       // xEventGroupSetBits(wifi_sta_event_group, WIFI_CONNECTED_BIT);
     }
 }
 
@@ -170,7 +185,7 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
 
 static esp_err_t init_wifi(){
 
-    wifi_sta_event_group = xEventGroupCreate();
+    //wifi_sta_event_group = xEventGroupCreate();
 
     //init TCP/IP pile
     ESP_ERROR_CHECK(esp_netif_init());
@@ -258,6 +273,7 @@ static void connect_wifi(){
     ConnectionStart = true;
     restart_wifi();
 
+/*
     EventBits_t bits = xEventGroupWaitBits(wifi_sta_event_group,
             WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
             pdFALSE,
@@ -275,10 +291,11 @@ static void connect_wifi(){
     } else {
         ESP_LOGE(TAG_wifi_sta, "UNEXPECTED EVENT");
     }
-
     ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, instance_got_ip));
     ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
+    
     vEventGroupDelete(wifi_sta_event_group);
+    */
 }
 //----------------------------SERVER_FUNCTION
 
@@ -294,15 +311,20 @@ void app_main() {
       status = nvs_flash_init();
     }
     ESP_ERROR_CHECK(status);
-
-    ESP_LOGI(TAG_wifi_sta, "ESP_WIFI_MODE_STA");
-
-    if(init_wifi() == ESP_OK){
-        if(scan_wifi() == true){
-            connect_wifi();
+    //Init wifi with error check
+    ESP_ERROR_CHECK(init_wifi());
+    //Loop
+    while(1){
+        if(!status_scan){
+            while((status_scan = scan_wifi()) != true){
+                ESP_LOGE(TAG_wifi_sta, "SSID : %s is not scanned",ESP_WIFI_SSID);
+                sleep(1);
+            }
         }
-        else{
-        ESP_LOGE(TAG_wifi_sta, "SSID : %s is not scanned",ESP_WIFI_SSID);
-        }   
+    
+        //Connect when ESP find our ssid
+        if(!status_connected && !ConnectionStart)connect_wifi();
+
+        sleep(1);
     }
 }
