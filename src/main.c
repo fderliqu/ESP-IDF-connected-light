@@ -345,7 +345,6 @@ esp_err_t init_spiffs(){
 esp_err_t print_spiffs_files(){
     char * dirpath = ESP_SPIFFS_PATH;
     DIR *dir = opendir(dirpath);
-    size_t dirpath_len = strlen(dirpath);
     if(!dir){
         ESP_LOGE(TAG_spiffs,"Failed to open directory : %s",dirpath);
         return ESP_FAIL;
@@ -353,7 +352,7 @@ esp_err_t print_spiffs_files(){
     ESP_LOGI(TAG_spiffs,"Checking spiffs files");
     struct dirent *entry;
     while((entry = readdir(dir)) != NULL){
-        ESP_LOGI(TAG_spiffs,"Found : name : %s | type %s",entry->d_name,entry->d_type);
+        ESP_LOGI(TAG_spiffs,"Found : name : %s",entry->d_name);
     }
     return ESP_OK;
 }
@@ -362,7 +361,7 @@ esp_err_t exist_file_spiffs(const char * file){
     char * dirpath = ESP_SPIFFS_PATH;
     bool check_status = false;
     DIR *dir = opendir(dirpath);
-    size_t dirpath_len = strlen(dirpath);
+    esp_err_t status;
     if(!dir){
         ESP_LOGE(TAG_spiffs,"Failed to open directory : %s",dirpath);
         return ESP_FAIL;
@@ -372,14 +371,17 @@ esp_err_t exist_file_spiffs(const char * file){
         if((entry = readdir(dir)) != NULL){
             if(strcmp(entry->d_name,file) == 0){
                 closedir(dir);
-                return ESP_OK;
+                status = ESP_OK;
+                check_status = true;
             }
         }
         else{
             closedir(dir);
-            return ESP_FAIL;
+            status =  ESP_FAIL;
+            check_status = true;
         }
     }
+    return status;
 }
 
 
