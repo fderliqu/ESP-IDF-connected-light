@@ -59,7 +59,7 @@ esp_err_t print_spiffs_files(){
     ESP_LOGI(TAG_spiffs,"Checking spiffs files");
     struct dirent *entry;
     while((entry = readdir(dir)) != NULL){
-        ESP_LOGI(TAG_spiffs,"Found : name : %s",entry->d_name);
+        ESP_LOGI(TAG_spiffs,"Found a file : name : %s",entry->d_name);
     }
     return ESP_OK;
 }
