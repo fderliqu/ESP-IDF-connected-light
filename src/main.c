@@ -20,12 +20,16 @@
 //WIFI_FUNCTIONS
 #include"Wifi.h"
 //SERVER_FUNCTION
+#include"Server.h"
 
 //----------------------------DEFINES/GLOBALS
+
+bool server_is_started = false;
 
 //----------------------------MAIN
 
 void app_main() {
+    httpd_handle_t server = NULL;
     //Initialize NVS
     esp_err_t status = nvs_flash_init();
     if (status == ESP_ERR_NVS_NO_FREE_PAGES || status == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -35,6 +39,10 @@ void app_main() {
     ESP_ERROR_CHECK(status);
     //Init wifi with error check
     ESP_ERROR_CHECK(init_wifi());
+    //Init spiffs
+    ESP_ERROR_CHECK(init_spiffs());
+    //Checking files
+    ESP_ERROR_CHECK(print_spiffs_files());
     //Loop
     while(1){
         if(!status_scan){
@@ -45,6 +53,14 @@ void app_main() {
         }
         //Connect when ESP find our ssid
         if(!status_connected && !ConnectionStart)connect_wifi();
+        if(status_connected && !server_is_started){
+            server = start_webserver();
+            if(server != NULL)server_is_started = true;
+        }
+        if(!status_connected && server_is_started){
+            ESP_ERROR_CHECK(stop_webserver(server));
+            server_is_started = false;
+        }
         sleep(1);
     }
 }
