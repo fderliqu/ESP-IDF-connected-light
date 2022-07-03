@@ -11,9 +11,11 @@
 #include <string.h>
 #include <sys/unistd.h>
 
+
 #include"esp_log.h"
 #include"esp_event.h"
 #include"nvs_flash.h"
+
 
 //SPIFFS_FUNCTIONS
 #include"Spiffs.h"
@@ -54,6 +56,7 @@ void app_main() {
         //Connect when ESP find our ssid
         if(!status_connected && !ConnectionStart)connect_wifi();
         if(status_connected && !server_is_started){
+            
             server = start_webserver();
             if(server != NULL)server_is_started = true;
         }
